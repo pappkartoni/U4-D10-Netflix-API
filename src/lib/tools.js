@@ -30,13 +30,17 @@ export const getPDFMedium = async m => {
     const base64Data = await imageToBase64(m.poster)
     const docDef = {
         content: [
-            {image: `data:image/jpeg;base64,${base64Data}`, width: 512},
+            {image: `data:image/jpeg;base64,${base64Data}`, style: "poster"},
             {text: m.title, style: "header"},
             {text: `This is a ${m.type} from ${m.year}. There is nothing else to say.`}
         ],
         styles: {
+            poster: {
+                alignment: "center",
+                width: 256
+            },
             header: {
-                fontSize: 25,
+                fontSize: 22,
                 bold: true,
                 margin: [0,10],
             }
