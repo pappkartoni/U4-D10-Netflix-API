@@ -1,5 +1,6 @@
 import Express from "express";
 import fs from "fs"
+import fetch from "node-fetch"
 import {fileURLToPath} from "url"
 import {dirname, extname, join} from "path"
 import {v4 as uuidv4} from "uuid"
@@ -43,7 +44,26 @@ mediaRouter.post("/", checkMediumSchema, async (req, res, next) => { //ok
 mediaRouter.get("/", async (req, res, next) => { //ok
     try {
         const media = await getMedia()
-        res.send(media)
+
+        if (req.query && req.query.title) {
+            const found = media.filter(m => m.title.toLowerCase().includes(req.query.title.toLowerCase()))
+            if (!found.length) {
+                const response = await fetch(`http://www.omdbapi.com/?apikey=ffbd3a91&s=${encodeURIComponent(req.query.title)}`)
+                if (response.ok) {
+                    const newMedia = await response.json()
+                    for (const m of newMedia.Search) {
+                        // I hate uppercase property names so they had to go
+                        const newMedium = {title: m.Title, year: m.Year, imdbID: m.imdbID, type: m.Type, poster: m.Poster, id: uuidv4(), createdAt: new Date(), updatedAt: new Date()}
+                        media.push(newMedium)
+                        found.push(newMedium)
+                        await setMedia(media)
+                    }
+                }
+            }
+            res.send(found)
+        } else {
+            res.send(media)
+        }
     } catch (error) {
         next(error)
     }
